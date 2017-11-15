@@ -10,6 +10,7 @@ import (
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/mitchellh/mapstructure"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type rulesPuppet struct {
@@ -20,11 +21,17 @@ type rulesPuppet struct {
 }
 
 func init() {
-	file, err := os.OpenFile("/home/rested/golang/src/iptables-daemon-go/logrus.log", os.O_APPEND|os.O_WRONLY, 0666)
+	err := loadConfig(".")
 	if err == nil {
-		log.SetOutput(file)
+		file, err := os.OpenFile("/home/rested/golang/src/iptables-daemon-go/logrus.log", os.O_APPEND|os.O_WRONLY, 0666)
+		if err == nil {
+			log.SetOutput(file)
+		} else {
+			log.Info("Failed to log to file, using default stderr")
+		}
 	} else {
-		log.Info("Failed to log to file, using default stderr")
+		fmt.Println("can't load config, exiting")
+		os.Exit(1)
 	}
 }
 
@@ -35,9 +42,8 @@ func main() {
 		fmt.Println(chains)
 	}
 	// parse rules from location - placeholder for now
-	out, err := ioutil.ReadFile("/home/rested/jsontables")
+	out, err := ioutil.ReadFile(viper.GetString("file_location"))
 	rules := parseJson(out)
-	// err = k.AppendUnique("filter", "INPUT", "-j", strings.ToUpper(rules[0].Action), "-s", rules[0].Source, "-p", rules[0].Proto)
 	insertIntoIPTables(rules, k)
 	fmt.Println(err)
 }
@@ -64,9 +70,6 @@ func parseJson(rawJson []byte) []rulesPuppet {
 		}
 	}
 	log.Info("successfully unmarshalled ", len(rules), " rules")
-	// for i := range rules {
-	// fmt.Println(rules[i].Name)
-	// }
 	return rules
 }
 
@@ -83,4 +86,11 @@ func insertIntoIPTables(ruleList []rulesPuppet, table *iptables.IPTables) {
 			}).Info("Succesfully inserted rule!")
 		}
 	}
+}
+
+func loadConfig(location string) error {
+	viper.SetConfigName("config")
+	viper.AddConfigPath(location)
+	viper.AddConfigPath(".")
+	return viper.ReadInConfig()
 }
