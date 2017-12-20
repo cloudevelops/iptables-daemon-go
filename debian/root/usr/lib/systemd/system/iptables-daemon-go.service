@@ -1,0 +1,13 @@
+[Unit]
+Description="iptables-daemon-go"
+After=network.target
+
+[Service]
+Restart=always
+RestartSec=30s
+User=root
+Group=root
+ExecStart=/usr/sbin/iptables-daemon-go
+
+[Install]
+WantedBy=multi-user.target
