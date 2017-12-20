@@ -42,7 +42,7 @@ func (c ByArea) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c ByArea) Less(i, j int) bool { return c[i].Position > c[j].Position }
 
 func init() {
-	err := loadConfig(".")
+	err := loadConfig("/etc/iptables-daemon-go/iptables-daemon-conf.json")
 	if err == nil {
 		if _, err := os.Stat("/var/log/iptables-daemon-go"); os.IsNotExist(err) {
 			os.Mkdir("/var/log/iptables-daemon-go", os.FileMode(0755))
